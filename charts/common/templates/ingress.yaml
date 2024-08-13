@@ -33,12 +33,28 @@ spec:
     - host: {{ . | quote }}
       http:
         paths:
-          - backend:
-              service:
-                name: {{ $fullName }}
-                port:
-                  name: http
-            path: /
-            pathType: ImplementationSpecific
+          {{- if .Values.ingress.paths }}
+            {{- range .Values.ingress.paths }}
+            - path: {{ .path | quote }}
+              pathType: {{ .pathType | default "ImplementationSpecific" | quote }}
+              backend:
+                service:
+                  name: {{ .service.name | quote }}
+                  port:
+                    {{- if .service.port.name }}
+                    name: {{ .service.port.name | quote }}
+                    {{- else }}
+                    number: {{ .service.port.number }}
+                    {{- end }}
+            {{- end }}
+          {{- else }}
+            - path: /
+              pathType: ImplementationSpecific
+              backend:
+                service:
+                  name: {{ $fullName }}
+                  port:
+                    name: http
+          {{- end }}
     {{- end }}
 {{- end }}
